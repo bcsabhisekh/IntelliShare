@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
 
 import com.abhisekhsite.Authentication.model.Provider;
 import com.abhisekhsite.Authentication.model.User;
@@ -17,6 +18,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+@Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler{
 	
 	private final JwtUtils jwtUtils;
