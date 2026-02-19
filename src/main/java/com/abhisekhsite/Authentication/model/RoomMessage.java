@@ -23,6 +23,8 @@ public class RoomMessage {
 	private String content;
 	private String type;
 	
+	private Double importanceScore; // AI-generated importance score
+	
 	private Instant createdAt = Instant.now();
 	
 	public RoomMessage() {
@@ -75,6 +77,14 @@ public class RoomMessage {
 
 	public void setCreatedAt(Instant createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public Double getImportanceScore() {
+		return importanceScore;
+	}
+
+	public void setImportanceScore(Double importanceScore) {
+		this.importanceScore = importanceScore;
 	}
 	
 }

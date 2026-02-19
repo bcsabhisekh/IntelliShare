@@ -19,12 +19,19 @@ public class KafkaBatchConsumer {
 
 	   private final RoomMessageRepository messageRepo;
 	   private final FileRecordRepository fileRepo;
+	   private final AIService aiService;
+	   private final RedisService redisService;
 	   
 	   private final List<EventMessage> buffer = new ArrayList<>();
 
-	   public KafkaBatchConsumer(RoomMessageRepository messageRepo, FileRecordRepository fileRepo) {
+	   public KafkaBatchConsumer(RoomMessageRepository messageRepo, 
+	                            FileRecordRepository fileRepo,
+	                            AIService aiService,
+	                            RedisService redisService) {
 		this.messageRepo = messageRepo;
 		this.fileRepo = fileRepo;
+		this.aiService = aiService;
+		this.redisService = redisService;
 	   }
 	   
 	   @KafkaListener(topics = "room-events", groupId = "room-events-group"
@@ -55,6 +62,11 @@ public class KafkaBatchConsumer {
 				   rm.setSender(e.getSender());
 				   rm.setContent(e.getContent());
 				   rm.setType("chat");
+				   
+				   // Score message importance using AI
+				   double importanceScore = aiService.scoreMessageImportance(e.getContent(), e.getSender());
+				   rm.setImportanceScore(importanceScore);
+				   
 				   messageToSave.add(rm);
 			   } else if("file".equalsIgnoreCase(e.getType())) {
 				   FileRecord fr = new FileRecord();
@@ -66,7 +78,16 @@ public class KafkaBatchConsumer {
 		   }
 		   
 		   if(!messageToSave.isEmpty()) {
-			   messageRepo.saveAll(messageToSave);
+			   List<RoomMessage> savedMessages = messageRepo.saveAll(messageToSave);
+			   
+			   // Cache messages in Redis grouped by room
+			   savedMessages.stream()
+			       .collect(java.util.stream.Collectors.groupingBy(RoomMessage::getRoom))
+			       .forEach((room, messages) -> {
+			           for (RoomMessage msg : messages) {
+			               redisService.addMessageToCache(room, msg);
+			           }
+			       });
 		   }
 		   
 		   if(!filesToSave.isEmpty()) {
